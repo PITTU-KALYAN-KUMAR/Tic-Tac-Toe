@@ -10,6 +10,10 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
+});
+
 app.use(cors({
   origin: 'http://localhost:5173', // Replace with your frontend URL
 }));

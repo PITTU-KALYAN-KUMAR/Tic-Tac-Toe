@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Cpu, User, RotateCcw, Trophy, Zap } from 'lucide-react';
 
 interface GameState {

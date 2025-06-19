@@ -22,18 +22,17 @@ app.use(express.json());
 // Helper function to run Python script
 const runPython = (script, board, position = null) => {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python', [join(__dirname, 'tic_tac_toe.py'), script, JSON.stringify(board), position]);
+    const pythonProcess = spawn('python3', [join(__dirname, 'tic_tac_toe.py'), script, JSON.stringify(board), position]);
 
     let result = '';
     let error = '';
 
-    pythonProcess.stdout.on('data', (data) => {
-      result += data.toString();
-    });
-
     pythonProcess.stderr.on('data', (data) => {
       console.error(`Python Error: ${data.toString()}`);
-      error += data.toString();
+    });
+    
+    pythonProcess.stdout.on('data', (data) => {
+      console.log(`Python Output: ${data.toString()}`);
     });
 
     pythonProcess.on('close', (code) => {

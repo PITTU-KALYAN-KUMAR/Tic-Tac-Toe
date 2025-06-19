@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
 });
 
 app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your frontend URL
+  origin: 'https://kkstic-tac-toe.vercel.app/'
 }));
 app.use(express.json());
 

@@ -26,7 +26,7 @@ function App() {
   });
   const [animatingCell, setAnimatingCell] = useState<number | null>(null);
 
-  const API_BASE = process.env.REACT_APP_API_BASE;
+  const API_BASE = 'https://kks-tic-tac-toe.onrender.com/api';
   const newGame = async () => {
     setIsLoading(true);
     try {

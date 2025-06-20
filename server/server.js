@@ -3,22 +3,22 @@ import cors from 'cors';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import serverless from 'serverless-http'; // Add this dependency
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
 
+// Update CORS to allow requests from the local React-Vite frontend
 app.use(cors({
-  origin: 'https://kkstic-tac-toe.vercel.app/' // Update with your frontend URL
+  origin: 'http://localhost:5173' // Replace with your local frontend URL
 }));
 app.use(express.json());
 
 // Helper function to run Python script
 const runPython = (script, board, position = null) => {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python3', [join(__dirname, '../tic_tac_toe.py'), script, JSON.stringify(board), position]);
+    const pythonProcess = spawn('python', [join(__dirname, 'python/tic_tac_toe.py'), script, JSON.stringify(board), position]);
 
     let result = '';
     let error = '';
@@ -29,6 +29,7 @@ const runPython = (script, board, position = null) => {
 
     pythonProcess.stderr.on('data', (data) => {
       error += data.toString();
+      console.error('Python script error:', error); // Log Python script errors
     });
 
     pythonProcess.on('close', (code) => {
@@ -48,7 +49,7 @@ const runPython = (script, board, position = null) => {
 
 // API Routes
 app.get('/', (req, res) => {
-  res.send('Backend is running!');
+  res.send('Backend is running locally!');
 });
 
 app.post('/api/new-game', async (req, res) => {
@@ -64,13 +65,23 @@ app.post('/api/new-game', async (req, res) => {
 app.post('/api/make-move', async (req, res) => {
   try {
     const { board, position } = req.body;
-    if (typeof position !== 'number') {
-      throw new Error('Invalid position value');
+    console.log('Received board:', board); // Log the incoming board
+    console.log('Received position:', position); // Log the incoming position
+
+    if (!Array.isArray(board)) {
+      throw new Error('Invalid board format. Expected an array.');
     }
+
+    if (typeof position !== 'number') {
+      throw new Error('Invalid position value. Expected a number.');
+    }
+
     const result = await runPython('make_move', board, position.toString());
+    console.log('Result from Python script:', result); // Log the result from the Python script
     res.json(result);
   } catch (error) {
     console.error('Error in /api/make-move:', error.message);
+    console.error('Stack trace:', error.stack); // Log the stack trace for debugging
     res.status(500).json({ error: error.message });
   }
 });
@@ -97,5 +108,8 @@ app.post('/api/check-game', async (req, res) => {
   }
 });
 
-// Export the app as a serverless function
-export const handler = serverless(app);
+// Start the server locally
+const PORT = 3000; // Replace with your desired port number
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});

@@ -26,8 +26,7 @@ function App() {
   });
   const [animatingCell, setAnimatingCell] = useState<number | null>(null);
 
-  const API_BASE = 'https://kks-tic-tac-toe.onrender.com/api';
-  const newGame = async () => {
+  const API_BASE = 'http://localhost:3000/api';  const newGame = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`${API_BASE}/new-game`, {
@@ -45,32 +44,39 @@ function App() {
 
   const makeMove = async (position: number) => {
     if (gameState.board[position] !== '' || gameState.game_over || isLoading) return;
-
+  
     setIsLoading(true);
     setAnimatingCell(position);
-
+  
     try {
       const moveResponse = await fetch(`${API_BASE}/make-move`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ board: gameState.board, position })
       });
+  
+      if (!moveResponse.ok) {
+        const errorData = await moveResponse.json();
+        throw new Error(errorData.error || 'Failed to make move.');
+      }
+  
       const moveResult = await moveResponse.json();
-
+  
       if (!moveResult.success) {
         setGameState(prev => ({ ...prev, message: moveResult.message }));
         setIsLoading(false);
         setAnimatingCell(null);
         return;
       }
-
+  
       const statusResponse = await fetch(`${API_BASE}/check-game`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ board: moveResult.board })
       });
+  
       const statusResult = await statusResponse.json();
-
+  
       if (statusResult.game_over) {
         setGameState(statusResult);
         updateStats(statusResult.winner);
@@ -78,7 +84,7 @@ function App() {
         setAnimatingCell(null);
         return;
       }
-
+  
       setTimeout(async () => {
         try {
           const computerResponse = await fetch(`${API_BASE}/computer-move`, {
@@ -86,18 +92,25 @@ function App() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ board: moveResult.board })
           });
+  
+          if (!computerResponse.ok) {
+            const errorData = await computerResponse.json();
+            throw new Error(errorData.error || 'Failed to make computer move.');
+          }
+  
           const computerResult = await computerResponse.json();
-
+  
           if (computerResult.success) {
             setAnimatingCell(computerResult.position);
-
+  
             const finalStatusResponse = await fetch(`${API_BASE}/check-game`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ board: computerResult.board })
             });
+  
             const finalStatusResult = await finalStatusResponse.json();
-
+  
             setGameState(finalStatusResult);
             if (finalStatusResult.game_over) {
               updateStats(finalStatusResult.winner);
@@ -105,8 +118,9 @@ function App() {
           }
         } catch (error) {
           console.error('Error with computer move:', error);
+          setGameState(prev => ({ ...prev, message: 'Error with computer move. Please try again.' }));
         }
-
+  
         setTimeout(() => {
           setAnimatingCell(null);
           setIsLoading(false);
@@ -114,7 +128,10 @@ function App() {
       }, 500);
     } catch (error) {
       console.error('Error making move:', error);
-      setGameState(prev => ({ ...prev, message: 'Error making move. Please try again.' }));
+      setGameState(prev => ({ 
+        ...prev, 
+        message: error instanceof Error ? error.message : 'Error making move. Please try again.' 
+      }));
       setIsLoading(false);
       setAnimatingCell(null);
     }

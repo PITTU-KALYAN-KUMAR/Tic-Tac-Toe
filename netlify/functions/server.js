@@ -3,36 +3,32 @@ import cors from 'cors';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import serverless from 'serverless-http'; // Add this dependency
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3001;
-
-app.get('/', (req, res) => {
-  res.send('Backend is running!');
-});
 
 app.use(cors({
-  origin: 'https://kkstic-tac-toe.vercel.app/'
+  origin: 'https://kkstic-tac-toe.vercel.app/' // Update with your frontend URL
 }));
 app.use(express.json());
 
 // Helper function to run Python script
 const runPython = (script, board, position = null) => {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python3', [join(__dirname, 'tic_tac_toe.py'), script, JSON.stringify(board), position]);
+    const pythonProcess = spawn('python3', [join(__dirname, '../tic_tac_toe.py'), script, JSON.stringify(board), position]);
 
     let result = '';
     let error = '';
 
-    pythonProcess.stderr.on('data', (data) => {
-      console.error(`Python Error: ${data.toString()}`);
-    });
-    
     pythonProcess.stdout.on('data', (data) => {
-      console.log(`Python Output: ${data.toString()}`);
+      result += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      error += data.toString();
     });
 
     pythonProcess.on('close', (code) => {
@@ -50,7 +46,11 @@ const runPython = (script, board, position = null) => {
   });
 };
 
-// Initialize new game
+// API Routes
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
+});
+
 app.post('/api/new-game', async (req, res) => {
   try {
     const result = await runPython('new_game', []);
@@ -61,7 +61,6 @@ app.post('/api/new-game', async (req, res) => {
   }
 });
 
-// Make a move
 app.post('/api/make-move', async (req, res) => {
   try {
     const { board, position } = req.body;
@@ -76,7 +75,6 @@ app.post('/api/make-move', async (req, res) => {
   }
 });
 
-// Get computer move
 app.post('/api/computer-move', async (req, res) => {
   try {
     const { board } = req.body;
@@ -88,7 +86,6 @@ app.post('/api/computer-move', async (req, res) => {
   }
 });
 
-// Check game status
 app.post('/api/check-game', async (req, res) => {
   try {
     const { board } = req.body;
@@ -100,6 +97,5 @@ app.post('/api/check-game', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Export the app as a serverless function
+export const handler = serverless(app);

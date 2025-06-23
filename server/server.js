@@ -13,16 +13,22 @@ const app = express();
 app.use(express.json());
 
 // Update CORS to allow requests from the local React-Vite frontend
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://kkstic-tac-toe.vercel.app' // <-- replace with real domain
-];
-app.use(
-  cors({
-    origin: allowedOrigins,  // array form is enough
-    credentials: true        // keep if you ever send cookies
-  })
-);
+const allowedOrigins = (process.env.FRONTEND_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim().replace(/\/$/, '')) // Remove trailing slashes
+  .filter(Boolean); // Remove empty strings
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // allow server-to-server
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error(`CORS: Origin ${origin} not allowed.`));
+    }
+  },
+  credentials: true,
+}));
 
 // Helper function to run Python script
 const runPython = (script, board, position = null) => {

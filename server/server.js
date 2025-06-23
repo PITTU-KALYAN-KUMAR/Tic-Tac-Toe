@@ -9,11 +9,26 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
-// Update CORS to allow requests from the local React-Vite frontend
-app.use(cors({
-  origin: 'http://localhost:5173' // Replace with your local frontend URL
-}));
+// Middleware to parse JSON payloads
 app.use(express.json());
+
+// Update CORS to allow requests from the local React-Vite frontend
+const defaultAllowedOrigins = [
+  'http://localhost:5173',
+  'https://kkstic-tac-toe.vercel.app/' // <-- replace with real domain
+];
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // Allow requests with no origin (e.g. server-to-server or cURL)
+      if (!origin) return cb(null, true);
+      return defaultAllowedOrigins.includes(origin)
+        ? cb(null, true)
+        : cb(new Error('Not allowed by CORS'));
+    },
+    credentials: true // only if your frontend sets withCredentials: true
+  })
+);
 
 // Helper function to run Python script
 const runPython = (script, board, position = null) => {

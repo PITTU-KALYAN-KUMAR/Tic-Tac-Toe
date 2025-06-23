@@ -19,14 +19,8 @@ const defaultAllowedOrigins = [
 ];
 app.use(
   cors({
-    origin: (origin, cb) => {
-      // Allow requests with no origin (e.g. server-to-server or cURL)
-      if (!origin) return cb(null, true);
-      return defaultAllowedOrigins.includes(origin)
-        ? cb(null, true)
-        : cb(new Error('Not allowed by CORS'));
-    },
-    credentials: true // only if your frontend sets withCredentials: true
+    origin: allowedOrigins,  // array form is enough
+    credentials: true        // keep if you ever send cookies
   })
 );
 

@@ -124,7 +124,8 @@ app.post('/api/check-game', async (req, res) => {
 });
 
 // Start the server locally
-const PORT = 3000; // Replace with your desired port number
+
+const PORT = process.env.PORT || 3000; // Replace with your desired port number
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

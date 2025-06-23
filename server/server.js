@@ -3,6 +3,9 @@ import cors from 'cors';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,7 +16,7 @@ const app = express();
 app.use(express.json());
 
 // Update CORS to allow requests from the local React-Vite frontend
-const allowedOrigins = (process.env.FRONTEND_ORIGINS || '')
+const allowedOrigins = (process.env.FRONTEND_ORIGINS)
   .split(',')
   .map(origin => origin.trim().replace(/\/$/, '')) // Remove trailing slashes
   .filter(Boolean); // Remove empty strings

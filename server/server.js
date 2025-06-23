@@ -15,7 +15,7 @@ app.use(express.json());
 // Update CORS to allow requests from the local React-Vite frontend
 const defaultAllowedOrigins = [
   'http://localhost:5173',
-  'https://kkstic-tac-toe.vercel.app/' // <-- replace with real domain
+  'https://kkstic-tac-toe.vercel.app' // <-- replace with real domain
 ];
 app.use(
   cors({

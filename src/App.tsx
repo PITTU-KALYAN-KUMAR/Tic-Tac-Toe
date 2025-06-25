@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Cpu, User, RotateCcw, Trophy, Zap } from 'lucide-react';
+import { Cpu, User, RotateCcw, Trophy, Zap, Sparkles, Star } from 'lucide-react';
 
 interface GameState {
   board: string[];
@@ -18,6 +18,7 @@ function App() {
     message: 'Click "New Game" to start playing!',
   });
 
+  const [celebrate, setCelebrate] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState({
     wins: 0,
@@ -147,6 +148,11 @@ function App() {
   };
 
   const updateStats = (winner: string | null) => {
+    if (winner === 'X') {
+      setCelebrate(true);
+      setTimeout(() => setCelebrate(false), 2000); // 2 seconds of sparkles
+    }
+    
     setStats((prev) => ({
       ...prev,
       wins: winner === 'X' ? prev.wins + 1 : prev.wins,
@@ -305,6 +311,18 @@ function App() {
           </div>
         </div>
       </div>
+
+      {celebrate && (
+        <div className="fixed inset-0 z-50 pointer-events-none flex justify-center items-center">
+          <div className="animate-bounce flex gap-4 text-yellow-300 opacity-90">
+            <Sparkles className="w-10 h-10 animate-spin-slow" />
+            <Star className="w-10 h-10 animate-ping" />
+            <Sparkles className="w-10 h-10 animate-spin-slow" />
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }

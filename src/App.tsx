@@ -152,9 +152,9 @@ function App() {
   const updateStats = (winner: string | null) => {
     if (winner === 'X') {
       setCelebrate(true);
-      setTimeout(() => setCelebrate(false), 2000); // 2 seconds of sparkles
+      setTimeout(() => setCelebrate(false), 3000); // 2 seconds of sparkles
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
+      setTimeout(() => setShowConfetti(false), 4000);
     }
     
     setStats((prev) => ({
@@ -340,6 +340,7 @@ function App() {
         gravity={0.2}
         recycle={false}
         tweenDuration={6000}
+        colors={['#cc99ff', '#ff99ff', '#9933ff', '#bf80ff']}
       />
     </div>
   </>

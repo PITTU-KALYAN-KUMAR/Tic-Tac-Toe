@@ -14,7 +14,7 @@ const app = express();
 
 // Middleware to parse JSON payloads
 app.use(express.json());
-
+/*
 // Update CORS to allow requests from the local React-Vite frontend
 const allowedOrigins = (process.env.FRONTEND_ORIGINS)
   .split(',')
@@ -32,16 +32,16 @@ app.use(cors({
   },
   credentials: true,
 }));
+*/
 
-
-/*app.use(cors({
+app.use(cors({
   origin: 'http://localhost:5173', // Update with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
   credentials: true,
 }));
 
-app.options('*', cors());*/
+app.options('*', cors());
 
 // Helper function to run Python script
 const runPython = (script, board, position = null) => {

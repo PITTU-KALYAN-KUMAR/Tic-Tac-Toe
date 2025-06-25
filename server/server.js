@@ -33,6 +33,7 @@ app.use(cors({
   credentials: true,
 }));
 
+
 /*app.use(cors({
   origin: 'http://localhost:5173', // Update with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods

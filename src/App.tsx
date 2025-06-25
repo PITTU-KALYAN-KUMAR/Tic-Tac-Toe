@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Cpu, User, RotateCcw, Trophy, Zap, Sparkles, Star } from 'lucide-react';
+import Confetti from 'react-confetti';
 
 interface GameState {
   board: string[];
@@ -19,6 +20,7 @@ function App() {
   });
 
   const [celebrate, setCelebrate] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState({
     wins: 0,
@@ -151,6 +153,8 @@ function App() {
     if (winner === 'X') {
       setCelebrate(true);
       setTimeout(() => setCelebrate(false), 2000); // 2 seconds of sparkles
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
     }
     
     setStats((prev) => ({
@@ -321,6 +325,25 @@ function App() {
           </div>
         </div>
       )}
+
+{showConfetti && (
+  <>
+    {/* Backdrop Dimmer */}
+    <div className="fixed inset-0 bg-black/40 z-40 pointer-events-none transition-opacity duration-500" />
+
+    {/* Confetti */}
+    <div className="fixed top-[80px] left-0 w-full h-full z-50 pointer-events-none">
+      <Confetti
+        width={window.innerWidth}
+        height={window.innerHeight}
+        numberOfPieces={200}
+        gravity={0.2}
+        recycle={false}
+        tweenDuration={6000}
+      />
+    </div>
+  </>
+)}
 
 
     </div>

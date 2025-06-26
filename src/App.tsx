@@ -54,16 +54,6 @@ function App() {
   const makeMove = async (position: number) => {
     if (gameState.board[position] !== '' || gameState.game_over || isLoading) return;
 
-    // Update the board immediately for the human move
-    const updatedBoard = [...gameState.board];
-    updatedBoard[position] = gameState.current_player;
-    setGameState((prev) => ({
-      ...prev,
-      board: updatedBoard,
-      current_player: 'O', // Switch to AI's turn
-      message: 'AI is thinking...',
-    }));
-
     setIsLoading(true);
     setAnimatingCell(position);
 
@@ -121,14 +111,6 @@ function App() {
 
           if (computerResult.success) {
             setAnimatingCell(computerResult.position);
-
-            // Update the board immediately for the AI move
-          setGameState((prev) => ({
-            ...prev,
-            board: computerResult.board,
-            current_player: 'X', // Switch back to human's turn
-            message: 'Your turn!',
-          }));
 
             const finalStatusResponse = await fetch(`${API_BASE}/check-game`, {
               method: 'POST',

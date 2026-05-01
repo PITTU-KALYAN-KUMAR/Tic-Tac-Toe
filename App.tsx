@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StatusBar,
   StyleSheet,
@@ -13,6 +13,72 @@ import {
 } from 'react-native-safe-area-context';
 
 type Player = 'X' | 'O' | null;
+type GameMode = 'PvP' | 'PvAI' | null;
+
+const checkWinner = (squares: Player[]): Player => {
+  const lines = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], // cols
+    [0, 4, 8], [2, 4, 6]             // diagonals
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+};
+
+const minimax = (squares: Player[], isMaximizing: boolean, depth: number = 0): number => {
+  const winner = checkWinner(squares);
+  if (winner === 'O') return 10 - depth;
+  if (winner === 'X') return depth - 10;
+  if (squares.every((square) => square !== null)) return 0;
+
+  if (isMaximizing) {
+    let bestScore = -Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (!squares[i]) {
+        squares[i] = 'O';
+        const score = minimax(squares, false, depth + 1);
+        squares[i] = null;
+        bestScore = Math.max(score, bestScore);
+      }
+    }
+    return bestScore;
+  } else {
+    let bestScore = Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (!squares[i]) {
+        squares[i] = 'X';
+        const score = minimax(squares, true, depth + 1);
+        squares[i] = null;
+        bestScore = Math.min(score, bestScore);
+      }
+    }
+    return bestScore;
+  }
+};
+
+const getBestMove = (squares: Player[]): number => {
+  let bestScore = -Infinity;
+  let move = -1;
+  const testSquares = [...squares];
+  
+  for (let i = 0; i < 9; i++) {
+    if (!testSquares[i]) {
+      testSquares[i] = 'O';
+      const score = minimax(testSquares, false);
+      testSquares[i] = null;
+      if (score > bestScore) {
+        bestScore = score;
+        move = i;
+      }
+    }
+  }
+  return move;
+};
 
 export default function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -27,25 +93,34 @@ export default function App() {
 
 function GameContent() {
   const insets = useSafeAreaInsets();
+  const [gameMode, setGameMode] = useState<GameMode>(null);
   const [board, setBoard] = useState<Player[]>(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState<boolean>(true);
 
-  const checkWinner = (squares: Player[]) => {
-    const lines = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // cols
-      [0, 4, 8], [2, 4, 6]             // diagonals
-    ];
-    for (let i = 0; i < lines.length; i++) {
-      const [a, b, c] = lines[i];
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        return squares[a];
+  useEffect(() => {
+    if (gameMode === 'PvAI' && !isXNext) {
+      const winner = checkWinner(board);
+      const isDraw = !winner && board.every((square) => square !== null);
+      
+      if (!winner && !isDraw) {
+        const timer = setTimeout(() => {
+          const move = getBestMove(board);
+          if (move !== -1) {
+            const newBoard = [...board];
+            newBoard[move] = 'O';
+            setBoard(newBoard);
+            setIsXNext(true);
+          }
+        }, 500); // 500ms delay to feel more natural
+        return () => clearTimeout(timer);
       }
     }
-    return null;
-  };
+  }, [isXNext, gameMode, board]);
 
   const handlePress = (index: number) => {
+    // Block touch during AI turn
+    if (gameMode === 'PvAI' && !isXNext) return;
+
     if (board[index] || checkWinner(board)) return;
 
     const newBoard = [...board];
@@ -59,6 +134,29 @@ function GameContent() {
     setIsXNext(true);
   };
 
+  const quitToMenu = () => {
+    setBoard(Array(9).fill(null));
+    setIsXNext(true);
+    setGameMode(null);
+  };
+
+  if (gameMode === null) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <Text style={styles.title}>Tic Tac Toe</Text>
+        <Text style={styles.subtitle}>Select Game Mode</Text>
+        
+        <TouchableOpacity style={styles.modeButton} onPress={() => setGameMode('PvP')} activeOpacity={0.8}>
+          <Text style={styles.modeButtonText}>Human vs Human</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={[styles.modeButton, styles.aiButton]} onPress={() => setGameMode('PvAI')} activeOpacity={0.8}>
+          <Text style={styles.modeButtonText}>Play with AI</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const winner = checkWinner(board);
   const isDraw = !winner && board.every((square) => square !== null);
 
@@ -70,6 +168,9 @@ function GameContent() {
   } else if (isDraw) {
     statusText = 'Draw!';
     statusColor = '#FF8C00';
+  } else if (gameMode === 'PvAI' && !isXNext) {
+    statusText = 'AI is thinking...';
+    statusColor = '#4682B4';
   }
 
   const renderSquare = (index: number) => {
@@ -97,9 +198,15 @@ function GameContent() {
         {board.map((_, index) => renderSquare(index))}
       </View>
 
-      <TouchableOpacity style={styles.resetButton} onPress={resetGame} activeOpacity={0.8}>
-        <Text style={styles.resetButtonText}>Reset Game</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.actionButton} onPress={resetGame} activeOpacity={0.8}>
+          <Text style={styles.actionButtonText}>Restart</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.actionButton, styles.quitButton]} onPress={quitToMenu} activeOpacity={0.8}>
+          <Text style={styles.actionButtonText}>Change Mode</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -116,8 +223,35 @@ const styles = StyleSheet.create({
     fontSize: 42,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 20,
+    marginBottom: 10,
     letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: 20,
+    color: '#666',
+    marginBottom: 40,
+    fontWeight: '500',
+  },
+  modeButton: {
+    width: '80%',
+    backgroundColor: '#4682B4',
+    paddingVertical: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  aiButton: {
+    backgroundColor: '#FF6347',
+  },
+  modeButtonText: {
+    color: '#FFF',
+    fontSize: 22,
+    fontWeight: 'bold',
   },
   status: {
     fontSize: 24,
@@ -164,21 +298,31 @@ const styles = StyleSheet.create({
   oText: {
     color: '#4682B4',
   },
-  resetButton: {
+  buttonRow: {
+    flexDirection: 'row',
     marginTop: 40,
+    width: 320,
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    flex: 1,
     backgroundColor: '#2E8B57',
     paddingVertical: 16,
-    paddingHorizontal: 40,
     borderRadius: 30,
+    alignItems: 'center',
+    marginHorizontal: 5,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
   },
-  resetButtonText: {
+  quitButton: {
+    backgroundColor: '#555',
+  },
+  actionButtonText: {
     color: '#FFF',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },
